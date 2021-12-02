@@ -1,7 +1,6 @@
 from django.http import HttpResponse
-from django.core import serializers
 from django.http.response import HttpResponseRedirect
-from django.shortcuts import redirect
+from django.db.models import Q
 import json
 from necktieapp.models import Contact
 from necktieapp.models import Doctor
@@ -13,13 +12,29 @@ def index(request):
     return HttpResponseRedirect('/doctor')
 
 def get_all_doctors(request):
-    if request.method != 'GET':
-        emptyResponse = json.dumps([{}])
-        return HttpResponse(emptyResponse, content_type='text/json')
+    data = {}
+
+    category = request.GET.get('category')
+    district = request.GET.get('district')
+    filter = Q()
+    if (category):
+        filter |= Q(category = category)
+    # if (district):
+    #     filter |= Q(city = district)
+
+    for doctor in Doctor.objects.all().filter(filter):
+        data[doctor.id] = getDoctorJson(doctor)
+
+    return HttpResponse(json.dumps(data), content_type='text/json')
+
+def get_doctor(request, id):
+
+    if not Doctor.objects.filter(id = id).exists():
+        return HttpResponse(json.dumps({'error': 'id {} not found'.format(id)}), content_type='text/json')
 
     data = {}
-    for doctor in Doctor.objects.all():
-        data[doctor.id] = getDoctorJson(doctor)
+    doctor = Doctor.objects.get(id = id)
+    data[id] = getDoctorJson(doctor)
 
     return HttpResponse(json.dumps(data), content_type='text/json')
     

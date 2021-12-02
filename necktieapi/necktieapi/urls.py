@@ -21,5 +21,6 @@ from necktieapp import views
 urlpatterns = [
     path('', views.index),
     path('doctor/', views.get_all_doctors),
+    path('doctor/<int:id>/', views.get_doctor),
     path('generate/', views.generate_doctor_data),
 ]
