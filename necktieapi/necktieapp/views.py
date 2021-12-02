@@ -16,9 +16,12 @@ def get_all_doctors(request):
     if request.method != 'GET':
         emptyResponse = json.dumps([{}])
         return HttpResponse(emptyResponse, content_type='text/json')
-        
-    emptyResponse = json.dumps([{}])
-    return HttpResponse(emptyResponse, content_type='text/json')
+
+    data = {}
+    for doctor in Doctor.objects.all():
+        data[doctor.id] = getDoctorJson(doctor)
+
+    return HttpResponse(json.dumps(data), content_type='text/json')
     
 def getContacts(doctorId):
     contacts = Contact.objects.filter(doctor = doctorId)
@@ -39,16 +42,9 @@ def getDoctorJson(doctor):
  
 
 def generate_doctor_data(request):
-    # Doctor.objects.all().delete()
-    # Contact.objects.all().delete()
+    Doctor.objects.all().delete()
 
     generator = DoctorGenerator()
     generator.generate()
-    
-    doctors = Doctor.objects.all()
 
-    data = {}
-    for doctor in doctors:
-        data[doctor.id] = getDoctorJson(doctor)
-
-    return HttpResponse(json.dumps(data), content_type='text/json')
+    return HttpResponseRedirect('/doctor')

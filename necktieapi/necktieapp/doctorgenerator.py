@@ -38,7 +38,7 @@ class DoctorGenerator:
         return categories[index]
 
     def generate(self):
-        for x in range(1):
+        for x in range(50):
             name = names.get_full_name()
             fee = self.generateRandomFee()
             address = self.generateAddress()
