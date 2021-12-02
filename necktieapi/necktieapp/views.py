@@ -1,15 +1,16 @@
-from django.shortcuts import render
 from django.http import HttpResponse
 from django.core import serializers
+from django.http.response import HttpResponseRedirect
+from django.shortcuts import redirect
 import json
-
+from necktieapp.models import Contact
 from necktieapp.models import Doctor
 from necktieapp.doctorgenerator import DoctorGenerator
 
 # Create your views here.
 
 def index(request):
-    return HttpResponse(json.dumps([{'message':'Welcome'}]), content_type='text/json')
+    return HttpResponseRedirect('/doctor')
 
 def get_all_doctors(request):
     if request.method != 'GET':
@@ -19,11 +20,35 @@ def get_all_doctors(request):
     emptyResponse = json.dumps([{}])
     return HttpResponse(emptyResponse, content_type='text/json')
     
+def getContacts(doctorId):
+    contacts = Contact.objects.filter(doctor = doctorId)
+    return ', '.join(str(x.number) for x in contacts)
+
+def getDoctorJson(doctor):
+    doctorJson = {
+            "name" : doctor.name,
+            "category" : doctor.category,
+            "address" : doctor.address.street + " " + doctor.address.city,
+            "contacts" : getContacts(doctor.id),
+            "fee" : {
+                "price" : str(doctor.fee.price),
+                "daysIncludingMedicine" : doctor.fee.daysIncludingWesternMeds
+            }
+        }
+    return doctorJson
+ 
+
 def generate_doctor_data(request):
     # Doctor.objects.all().delete()
+    # Contact.objects.all().delete()
 
     generator = DoctorGenerator()
     generator.generate()
-    doctors = serializers.serialize('json', Doctor.objects.all())
+    
+    doctors = Doctor.objects.all()
 
-    return HttpResponse(json.loads(doctors), content_type='application/json')
+    data = {}
+    for doctor in doctors:
+        data[doctor.id] = getDoctorJson(doctor)
+
+    return HttpResponse(json.dumps(data), content_type='text/json')
